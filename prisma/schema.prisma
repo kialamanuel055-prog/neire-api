@@ -1,0 +1,324 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  student
+  alumni
+  company
+  admin
+}
+
+enum SkillLevel {
+  declarada
+  comprovada
+  validada
+}
+
+enum CompanyStatus {
+  pendente
+  em_analise
+  verificada
+  ativa
+}
+
+enum OpportunityType {
+  estagio
+  emprego
+  formacao
+  bolsa
+  concurso
+  voluntariado
+  mentoria
+}
+
+enum OpportunityStatus {
+  pendente
+  publicada
+  encerrada
+  rejeitada
+}
+
+enum Modality {
+  presencial
+  remoto
+  hibrido
+}
+
+enum ApplicationStatus {
+  enviada
+  em_analise
+  pre_selecionado
+  entrevista
+  selecionado
+  nao_selecionado
+}
+
+enum CourseKind {
+  curso
+  workshop
+  bootcamp
+  masterclass
+}
+
+enum FeedbackKind {
+  evento
+  formacao
+}
+
+enum RequestStatus {
+  pendente
+  aprovada
+  rejeitada
+}
+
+model User {
+  id                 String              @id @default(cuid())
+  name               String
+  email              String              @unique
+  passwordHash       String
+  role               Role
+  department         String              @default("geral")
+  createdAt          DateTime            @default(now())
+  profile            StudentProfile?
+  company            Company?
+  graduate           GraduateProfile?
+  applications       Application[]
+  eventRegistrations EventRegistration[]
+  enrollments        CourseEnrollment[]
+  certificates       Certificate[]
+  notifications      Notification[]
+  feedback           Feedback[]
+  skillRequests      SkillRequest[]
+}
+
+model StudentProfile {
+  userId    String    @id
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course    String    @default("")
+  year      String    @default("")
+  location  String    @default("")
+  headline  String    @default("")
+  languages String[]  @default([])
+  available Boolean   @default(true)
+  skills    Skill[]
+  projects  Project[]
+}
+
+model Skill {
+  id        String         @id @default(cuid())
+  profileId String
+  profile   StudentProfile @relation(fields: [profileId], references: [userId], onDelete: Cascade)
+  name      String
+  category  String
+  level     SkillLevel     @default(declarada)
+
+  @@unique([profileId, name])
+}
+
+model Project {
+  id          String         @id @default(cuid())
+  profileId   String
+  profile     StudentProfile @relation(fields: [profileId], references: [userId], onDelete: Cascade)
+  title       String
+  description String         @default("")
+  link        String         @default("")
+}
+
+model Company {
+  userId        String        @id
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String
+  sector        String        @default("")
+  website       String        @default("")
+  status        CompanyStatus @default(pendente)
+  description   String        @default("")
+  location      String        @default("")
+  areas         String        @default("")
+  contactEmail  String        @default("")
+  contactPhone  String        @default("")
+  opportunities Opportunity[]
+}
+
+model Opportunity {
+  id           String            @id @default(cuid())
+  companyId    String
+  company      Company           @relation(fields: [companyId], references: [userId], onDelete: Cascade)
+  title        String
+  type         OpportunityType
+  area         String
+  modality     Modality
+  level        String
+  description  String
+  requirements String[]          @default([])
+  vacancies    Int               @default(1)
+  deadline     DateTime
+  status       OpportunityStatus @default(pendente)
+  createdAt    DateTime          @default(now())
+  applications Application[]
+
+  @@index([status])
+}
+
+model Application {
+  id            String               @id @default(cuid())
+  opportunityId String
+  opportunity   Opportunity          @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  studentId     String
+  student       User                 @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  message       String               @default("")
+  status        ApplicationStatus    @default(enviada)
+  createdAt     DateTime             @default(now())
+  history       ApplicationHistory[]
+
+  @@unique([opportunityId, studentId])
+}
+
+model ApplicationHistory {
+  id            String            @id @default(cuid())
+  applicationId String
+  application   Application       @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  status        ApplicationStatus
+  at            DateTime          @default(now())
+}
+
+model Event {
+  id            String              @id @default(cuid())
+  title         String
+  type          String
+  description   String              @default("")
+  date          DateTime
+  time          String
+  location      String
+  capacity      Int
+  registrations EventRegistration[]
+}
+
+model EventRegistration {
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([eventId, userId])
+}
+
+model Course {
+  id          String             @id @default(cuid())
+  title       String
+  kind        CourseKind
+  description String             @default("")
+  instructor  String             @default("")
+  startDate   DateTime
+  hours       Int
+  capacity    Int
+  enrollments CourseEnrollment[]
+}
+
+model CourseEnrollment {
+  courseId    String
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  completedAt DateTime?
+
+  @@id([courseId, userId])
+}
+
+model Certificate {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  studentId   String
+  student     User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentName String
+  activity    String
+  issuer      String
+  issuedAt    DateTime @default(now())
+}
+
+model Notification {
+  id     String   @id @default(cuid())
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title  String
+  text   String
+  link   String?
+  read   Boolean  @default(false)
+  at     DateTime @default(now())
+
+  @@index([userId, read])
+}
+
+model AuditLog {
+  id     String   @id @default(cuid())
+  at     DateTime @default(now())
+  actor  String
+  action String
+  detail String
+}
+
+model NewsItem {
+  id        String   @id @default(cuid())
+  title     String
+  category  String
+  summary   String
+  body      String   @default("")
+  date      DateTime
+  published Boolean  @default(true)
+}
+
+model ImpactStory {
+  id         String   @id @default(cuid())
+  title      String
+  personName String
+  role       String
+  story      String
+  date       DateTime
+  published  Boolean  @default(true)
+}
+
+model Feedback {
+  id          String       @id @default(cuid())
+  kind        FeedbackKind
+  targetId    String
+  targetTitle String
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ratings     Json
+  comment     String       @default("")
+  at          DateTime     @default(now())
+
+  @@unique([kind, targetId, userId])
+}
+
+model SkillRequest {
+  id           String        @id @default(cuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skill        String
+  evidenceType String
+  evidence     String
+  status       RequestStatus @default(pendente)
+  resultLevel  SkillLevel?
+  at           DateTime      @default(now())
+  decidedAt    DateTime?
+}
+
+model GraduateProfile {
+  userId          String  @id
+  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  graduationYear  String  @default("")
+  company         String  @default("")
+  position        String  @default("")
+  bio             String  @default("")
+  offersMentoring Boolean @default(false)
+}
+
+// ANCHOR:prisma-models

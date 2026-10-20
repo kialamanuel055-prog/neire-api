@@ -1,0 +1,8 @@
+
+.env.docker-local
+
+.env
+
+node_modules
+
+dist
