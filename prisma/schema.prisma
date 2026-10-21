@@ -96,6 +96,11 @@ model User {
   notifications      Notification[]
   feedback           Feedback[]
   skillRequests      SkillRequest[]
+  mentor               Mentor?
+  mentorshipRequests   MentorshipRequest[] @relation("MentorshipStudent")
+  complaints           Complaint[]
+  challengeMemberships ChallengeTeamMember[]
+  debateMemberships    DebateTeamMember[]
 }
 
 model StudentProfile {
@@ -144,6 +149,7 @@ model Company {
   contactEmail  String        @default("")
   contactPhone  String        @default("")
   opportunities Opportunity[]
+  challenges    Challenge[]
 }
 
 model Opportunity {
@@ -321,4 +327,176 @@ model GraduateProfile {
   offersMentoring Boolean @default(false)
 }
 
+enum MentorshipStatus {
+  pendente
+  aceite
+  recusada
+}
+
+enum ChallengeStatus {
+  pendente
+  ativo
+  encerrado
+  rejeitado
+}
+
+enum DebateStatus {
+  inscricoes
+  em_curso
+  terminado
+}
+
+enum ComplaintStatus {
+  recebida
+  em_analise
+  resolvida
+}
+
+model Mentor {
+  userId   String              @id
+  user     User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  area     String
+  company  String              @default("")
+  bio      String              @default("")
+  active   Boolean             @default(true)
+  requests MentorshipRequest[]
+}
+
+model MentorshipRequest {
+  id        String           @id @default(cuid())
+  studentId String
+  student   User             @relation("MentorshipStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  mentorId  String
+  mentor    Mentor           @relation(fields: [mentorId], references: [userId], onDelete: Cascade)
+  topic     String
+  message   String           @default("")
+  status    MentorshipStatus @default(pendente)
+  createdAt DateTime         @default(now())
+
+  @@index([studentId])
+  @@index([mentorId])
+}
+
+model Challenge {
+  id           String                @id @default(cuid())
+  companyId    String
+  company      Company               @relation(fields: [companyId], references: [userId], onDelete: Cascade)
+  title        String
+  problem      String
+  requirements String[]              @default([])
+  skills       String[]              @default([])
+  deadline     DateTime
+  prize        String                @default("")
+  status       ChallengeStatus       @default(pendente)
+  winnerTeamId String?
+  createdAt    DateTime              @default(now())
+  teams        ChallengeTeam[]
+  submissions  ChallengeSubmission[]
+
+  @@index([status])
+}
+
+model ChallengeTeam {
+  id          String                @id @default(cuid())
+  challengeId String
+  challenge   Challenge             @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  name        String
+  createdAt   DateTime              @default(now())
+  members     ChallengeTeamMember[]
+  submission  ChallengeSubmission?
+}
+
+model ChallengeTeamMember {
+  teamId      String
+  team        ChallengeTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  challengeId String
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([teamId, userId])
+  @@unique([challengeId, userId])
+}
+
+model ChallengeSubmission {
+  id          String        @id @default(cuid())
+  challengeId String
+  challenge   Challenge     @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  teamId      String        @unique
+  team        ChallengeTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  summary     String
+  link        String        @default("")
+  score       Float?
+  feedback    String?
+  submittedAt DateTime      @default(now())
+}
+
+model DebateContest {
+  id          String        @id @default(cuid())
+  title       String
+  description String        @default("")
+  topics      String[]      @default([])
+  status      DebateStatus  @default(inscricoes)
+  createdAt   DateTime      @default(now())
+  teams       DebateTeam[]
+  matches     DebateMatch[]
+}
+
+model DebateTeam {
+  id        String             @id @default(cuid())
+  contestId String
+  contest   DebateContest      @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  name      String
+  createdAt DateTime           @default(now())
+  members   DebateTeamMember[]
+  matchesA  DebateMatch[]      @relation("MatchA")
+  matchesB  DebateMatch[]      @relation("MatchB")
+}
+
+model DebateTeamMember {
+  teamId    String
+  team      DebateTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  contestId String
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([teamId, userId])
+  @@unique([contestId, userId])
+}
+
+model DebateMatch {
+  id        String        @id @default(cuid())
+  contestId String
+  contest   DebateContest @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  round     Int
+  teamAId   String
+  teamA     DebateTeam    @relation("MatchA", fields: [teamAId], references: [id], onDelete: Cascade)
+  teamBId   String
+  teamB     DebateTeam    @relation("MatchB", fields: [teamBId], references: [id], onDelete: Cascade)
+  topic     String
+  scoreA    Int?
+  scoreB    Int?
+}
+
+model Complaint {
+  id          String          @id @default(cuid())
+  category    String
+  description String
+  authorId    String?
+  author      User?           @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  status      ComplaintStatus @default(recebida)
+  response    String?
+  createdAt   DateTime        @default(now())
+
+  @@index([status])
+}
+
+model ArchiveDoc {
+  id          String   @id @default(cuid())
+  title       String
+  category    String
+  description String   @default("")
+  link        String   @default("")
+  uploadedBy  String
+  createdAt   DateTime @default(now())
+}
 // ANCHOR:prisma-models

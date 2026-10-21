@@ -19,6 +19,9 @@ import { CoursesModule } from './courses/courses.module';
 import { RateLimitGuard } from './common/rate-limit.guard';
 import { ContentModule } from './content/content.module';
 import { FeedbackModule } from './feedback/feedback.module';
+import { MentorshipModule } from './mentorship/mentorship.module';
+import { ComplaintsModule } from './complaints/complaints.module';
+import { ArchiveModule } from './archive/archive.module';
 // ANCHOR:module-imports
 
 @Module({
@@ -38,6 +41,9 @@ import { FeedbackModule } from './feedback/feedback.module';
     CoursesModule,
     ContentModule,
     FeedbackModule,
+    MentorshipModule,
+    ComplaintsModule,
+    ArchiveModule,
     // ANCHOR:app-modules
   ],
   controllers: [HealthController],
