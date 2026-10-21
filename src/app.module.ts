@@ -13,6 +13,9 @@ import { ApplicationsModule } from './applications/applications.module';
 import { ProfilesModule } from './profiles/profiles.module';
 import { SkillRequestsModule } from './skill-requests/skill-requests.module';
 import { AlumniModule } from './alumni/alumni.module';
+import { CertificatesModule } from './certificates/certificates.module';
+import { EventsModule } from './events/events.module';
+import { CoursesModule } from './courses/courses.module';
 // ANCHOR:module-imports
 
 @Module({
@@ -27,6 +30,9 @@ import { AlumniModule } from './alumni/alumni.module';
     ProfilesModule,
     SkillRequestsModule,
     AlumniModule,
+    CertificatesModule,
+    EventsModule,
+    CoursesModule,
     // ANCHOR:app-modules
   ],
   controllers: [HealthController],
