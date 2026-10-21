@@ -9,6 +9,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../core/audit.service';
 import { NotificationsService } from '../core/notifications.service';
+import { CertificatesService } from '../certificates/certificates.service';
 import { isUniqueViolation, normalizeLink } from '../common/link';
 import type { AuthUser } from '../common/types';
 import {
@@ -109,6 +110,7 @@ export class ChallengesService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
+    private readonly certificates: CertificatesService,
   ) {}
 
   private visible(user: AuthUser): Prisma.ChallengeWhereInput {
@@ -233,6 +235,9 @@ export class ChallengesService {
         `${best.team.name} venceu "${ch.title}".`,
         `/app/estudante/desafios/${ch.id}`,
       );
+    }
+    for (const m of best.team.members) {
+      await this.certificates.issueFor(m.userId, `Vencedor do desafio: ${ch.title}`, user.id);
     }
     return challengeDto(updated, await this.companyName(ch.companyId));
   }

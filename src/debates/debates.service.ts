@@ -8,6 +8,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService } from '../core/audit.service';
 import { NotificationsService } from '../core/notifications.service';
+import { CertificatesService } from '../certificates/certificates.service';
 import { isUniqueViolation } from '../common/link';
 import type { AuthUser } from '../common/types';
 import { CreateContestDto, CreateDebateTeamDto, ResultDto } from './dto/debate.dto';
@@ -93,6 +94,7 @@ export class DebatesService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
+    private readonly certificates: CertificatesService,
   ) {}
 
   private async load(id: string): Promise<ContestRow> {
@@ -176,6 +178,34 @@ export class DebatesService {
     if (c.status !== 'em_curso') throw new BadRequestException('O concurso não está em curso.');
     const updated = await this.prisma.debateContest.update({ where: { id }, data: { status: 'terminado' } });
     await this.audit.logBy(admin.id, 'Concurso de debates terminado', updated.title);
+    const teams = await this.prisma.debateTeam.findMany({ where: { contestId: id }, include: { members: true } });
+    const matches = await this.prisma.debateMatch.findMany({ where: { contestId: id } });
+    const table = new Map<string, { members: { userId: string }[]; played: number; points: number; scored: number }>();
+    for (const t of teams) table.set(t.id, { members: t.members, played: 0, points: 0, scored: 0 });
+    for (const m of matches) {
+      if (m.scoreA === null || m.scoreB === null) continue;
+      const a = table.get(m.teamAId);
+      const b = table.get(m.teamBId);
+      if (!a || !b) continue;
+      a.played++;
+      b.played++;
+      a.scored += m.scoreA;
+      b.scored += m.scoreB;
+      if (m.scoreA > m.scoreB) a.points += 3;
+      else if (m.scoreA < m.scoreB) b.points += 3;
+      else {
+        a.points += 1;
+        b.points += 1;
+      }
+    }
+    const rank = [...table.values()].sort((x, y) => y.points - x.points || y.scored - x.scored);
+    for (let i = 0; i < rank.length; i++) {
+      const row = rank[i]!;
+      const label = i === 0 && row.played > 0 ? '1.º lugar' : 'participação';
+      for (const m of row.members) {
+        await this.certificates.issueFor(m.userId, `Concurso de Debates: ${updated.title} (${label})`, admin.id);
+      }
+    }
     const members = await this.prisma.debateTeamMember.findMany({ where: { contestId: id } });
     for (const m of members) {
       await this.notifications.notify(
