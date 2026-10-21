@@ -16,6 +16,7 @@ import { AlumniModule } from './alumni/alumni.module';
 import { CertificatesModule } from './certificates/certificates.module';
 import { EventsModule } from './events/events.module';
 import { CoursesModule } from './courses/courses.module';
+import { RateLimitGuard } from './common/rate-limit.guard';
 // ANCHOR:module-imports
 
 @Module({
@@ -37,6 +38,7 @@ import { CoursesModule } from './courses/courses.module';
   ],
   controllers: [HealthController],
   providers: [
+    { provide: APP_GUARD, useClass: RateLimitGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
   ],
