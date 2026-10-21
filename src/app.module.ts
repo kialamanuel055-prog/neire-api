@@ -10,6 +10,9 @@ import { CoreModule } from './core/core.module';
 import { CompaniesModule } from './companies/companies.module';
 import { OpportunitiesModule } from './opportunities/opportunities.module';
 import { ApplicationsModule } from './applications/applications.module';
+import { ProfilesModule } from './profiles/profiles.module';
+import { SkillRequestsModule } from './skill-requests/skill-requests.module';
+import { AlumniModule } from './alumni/alumni.module';
 // ANCHOR:module-imports
 
 @Module({
@@ -21,6 +24,9 @@ import { ApplicationsModule } from './applications/applications.module';
     CompaniesModule,
     OpportunitiesModule,
     ApplicationsModule,
+    ProfilesModule,
+    SkillRequestsModule,
+    AlumniModule,
     // ANCHOR:app-modules
   ],
   controllers: [HealthController],
