@@ -17,6 +17,8 @@ import { CertificatesModule } from './certificates/certificates.module';
 import { EventsModule } from './events/events.module';
 import { CoursesModule } from './courses/courses.module';
 import { RateLimitGuard } from './common/rate-limit.guard';
+import { ContentModule } from './content/content.module';
+import { FeedbackModule } from './feedback/feedback.module';
 // ANCHOR:module-imports
 
 @Module({
@@ -34,6 +36,8 @@ import { RateLimitGuard } from './common/rate-limit.guard';
     CertificatesModule,
     EventsModule,
     CoursesModule,
+    ContentModule,
+    FeedbackModule,
     // ANCHOR:app-modules
   ],
   controllers: [HealthController],
