@@ -22,6 +22,8 @@ import { FeedbackModule } from './feedback/feedback.module';
 import { MentorshipModule } from './mentorship/mentorship.module';
 import { ComplaintsModule } from './complaints/complaints.module';
 import { ArchiveModule } from './archive/archive.module';
+import { ChallengesModule } from './challenges/challenges.module';
+import { DebatesModule } from './debates/debates.module';
 // ANCHOR:module-imports
 
 @Module({
@@ -44,6 +46,8 @@ import { ArchiveModule } from './archive/archive.module';
     MentorshipModule,
     ComplaintsModule,
     ArchiveModule,
+    ChallengesModule,
+    DebatesModule,
     // ANCHOR:app-modules
   ],
   controllers: [HealthController],
